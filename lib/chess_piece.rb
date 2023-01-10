@@ -5,7 +5,7 @@ class BasicChessPiece
   attr_reader :color
   attr_accessor :symbol, :row, :col, :had_move_once, :dead
 
-  def initialize(color, row, col)
+  def initialize(color: '', row: -1, col: -1)
     @symbol = ''
     @color = color
     @row = row
@@ -14,16 +14,36 @@ class BasicChessPiece
     @dead = false
   end
 
-  def reachable_places; end
-
-  def kill(chess)
-    chess.dead = true
+  def ally?(chess_piece)
+    color == chess_piece.color
   end
 
-  def promote!(_chess); end
+  def kill(chess_piece)
+    chess_piece.dead = true
+  end
+
+  def path_valid?(row, col)
+    nil
+  end
+
+  def promote!(_chess_piece)
+    nil
+  end
+
+  def reachable?(row, col)
+    reachable_places.include?([row, col])
+  end
+
+  def reachable_places
+    []
+  end
 
   def to_s
     symbol
+  end
+
+  def unreachable?(row, col)
+    !reachable?(row, col)
   end
 end
 

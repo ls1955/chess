@@ -13,16 +13,11 @@ class ChessBoard
     @layout = Array.new(ROW_AMOUNT) { Array.new(COL_AMOUNT, ' ') }
   end
 
-  def tile_color(row, col)
-    if (row.even? && col.even?) || (row.odd? && col.odd?)
-      'white'
-    else
-      'black'
-    end
+  def chess_piece(row, col)
+    layout[row][col]
   end
 
-  def place(chess, row, col)
-    layout[row][col] = chess
+  def movable?(row, col)
   end
 
   def move(chess, prev_row, prev_col, row, col)
@@ -30,17 +25,33 @@ class ChessBoard
     layout[prev_row][prev_col] = ' '
   end
 
+  def occupy?(row, col)
+    layout[row][col] != ' '
+  end
+
+  def place(chess, row, col)
+    layout[row][col] = chess
+  end
+
   def place_chess_pieces_at_begin
     chess_piece_types = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
 
     chess_piece_types.each_with_index do |type, col_offset|
-      layout[0][0 + col_offset] = type.new('black', 0, 0 + col_offset)
-      layout[ROW_AMOUNT - 1][0 + col_offset] = type.new('white', ROW_AMOUNT - 1, 0 + col_offset)
+      layout[0][0 + col_offset] = type.new(color: 'black', row: 0, col: 0 + col_offset)
+      layout[ROW_AMOUNT - 1][0 + col_offset] = type.new(color: 'white', row: ROW_AMOUNT - 1, col: 0 + col_offset)
     end
 
     COL_AMOUNT.times do |col_offset|
-      layout[1][0 + col_offset] = Pawn.new('black', 1, 0 + col_offset)
-      layout[ROW_AMOUNT - 2][0 + col_offset] = Pawn.new('white', ROW_AMOUNT - 2, 0 + col_offset)
+      layout[1][0 + col_offset] = Pawn.new(color: 'black', row: 1, col: 0 + col_offset)
+      layout[ROW_AMOUNT - 2][0 + col_offset] = Pawn.new(color: 'white', row: ROW_AMOUNT - 2, col: 0 + col_offset)
+    end
+  end
+
+  def tile_color(row, col)
+    if row.even? == col.even?
+      'white'
+    else
+      'black'
     end
   end
 
@@ -55,5 +66,9 @@ class ChessBoard
       s << "#{row_num} |#{row}| #{row_num}\n"
     end
     s << "  -----------------\n   #{a_to_h}\n"
+  end
+
+  def unoccupy?(row, col)
+    !occupy?(row, col)
   end
 end
