@@ -1,15 +1,12 @@
-# frozen_string_literal: false
+# frozen_string_literal: true
 
-# parent class of all chess pieces
 class BasicChessPiece
   attr_reader :color
-  attr_accessor :symbol, :row, :col, :had_move_once, :dead
+  attr_accessor :symbol, :had_move_once, :dead
 
-  def initialize(color: '', row: -1, col: -1)
+  def initialize(color: '')
     @symbol = ''
     @color = color
-    @row = row
-    @col = col
     @had_move_once = false
     @dead = false
   end
@@ -18,11 +15,15 @@ class BasicChessPiece
     color == chess_piece.color
   end
 
+  def enemy?(chess_piece)
+    !ally?(chess_piece)
+  end
+
   def kill(chess_piece)
     chess_piece.dead = true
   end
 
-  def path_valid?(row, col)
+  def path_valid?(_board, _old_row, _old_col, _new_row, _new_col)
     nil
   end
 
@@ -30,11 +31,11 @@ class BasicChessPiece
     nil
   end
 
-  def reachable?(row, col)
-    reachable_places.include?([row, col])
+  def reachable?(old_row, old_col, new_row, new_col)
+    reachable_places(old_row, old_col).include?([new_row, new_col])
   end
 
-  def reachable_places
+  def reachable_places(_old_row, _old_col)
     []
   end
 
@@ -47,10 +48,47 @@ class BasicChessPiece
   end
 end
 
-# Pawn
 class Pawn < BasicChessPiece
-  def reachable_places
-    [[row - 1, col], [row - 2, col]]
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    if [old_row - 2, old_col] == [new_row, new_col]
+      return false if board.occupy?(old_row - 2, old_col) || board.occupy?(old_row - 1, old_col)
+
+      true
+    elsif [old_row - 1, old_col] == [new_row, new_col]
+      return false if board.occupy?(old_row - 1, old_col)
+
+      true
+    elsif [old_row - 1, old_col - 1] == [new_row, new_col]
+      return false unless board.occupy?(old_row - 1, old_col - 1)
+
+      if ally?(board.chess_piece(old_row - 1, old_col - 1))
+        false
+      else
+        kill(board.chess_piece(old_row - 1, old_col - 1))
+        true
+      end
+    elsif [old_row - 1, old_col + 1] == [new_row, new_col]
+      return false unless board.occupy?(old_row - 1, old_col + 1)
+
+      if ally?(board.chess_piece(old_row - 1, old_col + 1))
+        false
+      else
+        kill(board.chess_piece(old_row - 1, old_col + 1))
+        true
+      end
+    else
+      false
+    end
+  end
+
+  def reachable?(old_row, old_col, new_row, new_col)
+    if [old_row - 2, old_col] == [new_row, new_col]
+      had_move_once ? false : true
+    elsif [old_row - 1, old_col] == [new_row, new_col]
+      true
+    else
+      false
+    end
   end
 
   def symbol
@@ -58,12 +96,37 @@ class Pawn < BasicChessPiece
   end
 end
 
-# Rook
 class Rook < BasicChessPiece
-  def reachable_places
-    (-8..8).each_with_object([]) do |offset, places|
-      places << [row + offset, col]
-      places << [row, col + offset]
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    return unless reachable?(old_row, old_col, new_row, new_col)
+
+    if old_row > new_row
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col) && ally?(board.chess_piece(old_row - offset, old_col)) }
+    elsif old_row < new_row
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col) && ally?(board.chess_piece(old_row + offset, old_col)) }
+    elsif old_col > new_col
+      distance = old_col - new_col
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offet) && ally?(board.chess_piece(old_row, old_col - offset)) }
+    else
+      distance = new_col - old_col
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col + offset) && ally?(board.chess_piece(old_row, old_col + offset)) }
+    end
+
+    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
+
+    true
+  end
+
+  def reachable_places(old_row, old_col)
+    (-7..7).each_with_object([]) do |offset, places|
+      places << [old_row + offset, old_col]
+      places << [old_row, old_col + offset]
     end
   end
 
@@ -72,14 +135,24 @@ class Rook < BasicChessPiece
   end
 end
 
-# Knight
 class Knight < BasicChessPiece
-  def reachable_places
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    return false unless reachable?(old_row, old_col, new_row, new_col)
+
+    if enemy?(board.chess_piece(new_row, new_col))
+      kill(board.chess_piece(new_row, new_col))
+      true
+    else
+      false
+    end
+  end
+
+  def reachable_places(old_row, old_col)
     [
-      [row - 2, col - 1], [row - 2, col + 1],
-      [row - 1, col - 2], [row - 1, col + 2],
-      [row + 1, col - 2], [row + 1, col + 2],
-      [row + 2, col - 1], [row + 2, col - 2]
+      [old_row - 2, old_col - 1], [old_row - 2, old_col + 1],
+      [old_row - 1, old_col - 2], [old_row - 1, old_col + 2],
+      [old_row + 1, old_col - 2], [old_row + 1, old_col + 2],
+      [old_row + 2, old_col - 1], [old_row + 2, old_col - 2]
     ]
   end
 
@@ -88,11 +161,10 @@ class Knight < BasicChessPiece
   end
 end
 
-# Bishop
 class Bishop < BasicChessPiece
-  def reachable_places
-    (-8..8).each_with_object([]) do |offset, places|
-      places << [row + offset, col + offset]
+  def reachable_places(old_row, old_col)
+    (-7..7).each_with_object([]) do |offset, places|
+      places << [old_row + offset, old_col + offset]
     end
   end
 
@@ -101,13 +173,12 @@ class Bishop < BasicChessPiece
   end
 end
 
-# Queen
 class Queen < BasicChessPiece
-  def reachable_places
-    (-8..8).each_with_object([]) do |offset, places|
-      places << [row + offset, col + offset]
-      places << [row + offset, col]
-      places << [row, col + offset]
+  def reachable_places(old_row, old_col)
+    (-7..7).each_with_object([]) do |offset, places|
+      places << [old_row + offset, old_col + offset]
+      places << [old_row + offset, old_col]
+      places << [old_row, old_col + offset]
     end
   end
 
@@ -116,12 +187,12 @@ class Queen < BasicChessPiece
   end
 end
 
-# King
 class King < BasicChessPiece
-  def reachable_places
+  def reachable_places(old_row, old_col)
     (-1..1).each_with_object([]) do |offset, places|
-      places << [row + offset, col]
-      places << [row, col + offset]
+      places << [old_row + offset, old_col]
+      places << [old_row, old_col + offset]
+      places << [old_row + offset, old_col + offset]
     end
   end
 

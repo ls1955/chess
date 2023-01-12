@@ -17,33 +17,39 @@ class ChessBoard
     layout[row][col]
   end
 
-  def movable?(row, col)
+  def movable?(old_row, old_col, new_row, new_col)
+    # chess_piece = layout[old_row, old_col]
+
+    # chess_piece.reachable?(old_row, old_col, new_row, new_col)
   end
 
-  def move(chess, prev_row, prev_col, row, col)
-    place(chess, row, col)
-    layout[prev_row][prev_col] = ' '
+  def move_piece(old_row, old_col, new_row, new_col)
+    return unless chess_piece(old_row, old_col).path_valid?(self, old_row, old_col, new_row, new_col)
+
+    place(chess_piece(old_row, old_col), new_row, new_col)
+    chess_piece(old_row, old_col).had_move_once = true
+    layout[old_row][old_col] = ' '
   end
 
   def occupy?(row, col)
     layout[row][col] != ' '
   end
 
-  def place(chess, row, col)
-    layout[row][col] = chess
+  def place(chess_piece, row, col)
+    layout[row][col] = chess_piece
   end
 
   def place_chess_pieces_at_begin
     chess_piece_types = [Rook, Knight, Bishop, Queen, King, Bishop, Knight, Rook]
 
     chess_piece_types.each_with_index do |type, col_offset|
-      layout[0][0 + col_offset] = type.new(color: 'black', row: 0, col: 0 + col_offset)
-      layout[ROW_AMOUNT - 1][0 + col_offset] = type.new(color: 'white', row: ROW_AMOUNT - 1, col: 0 + col_offset)
+      layout[0][0 + col_offset] = type.new(color: 'black')
+      layout[ROW_AMOUNT - 1][0 + col_offset] = type.new(color: 'white')
     end
 
     COL_AMOUNT.times do |col_offset|
-      layout[1][0 + col_offset] = Pawn.new(color: 'black', row: 1, col: 0 + col_offset)
-      layout[ROW_AMOUNT - 2][0 + col_offset] = Pawn.new(color: 'white', row: ROW_AMOUNT - 2, col: 0 + col_offset)
+      layout[1][0 + col_offset] = Pawn.new(color: 'black')
+      layout[ROW_AMOUNT - 2][0 + col_offset] = Pawn.new(color: 'white')
     end
   end
 
