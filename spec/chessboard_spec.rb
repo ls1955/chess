@@ -283,7 +283,7 @@ describe ChessBoard do
   let(:white_knight2) { Knight.new(color: 'white') }
   let(:black_knight) { Knight.new(color: 'black') }
 
-  context "white knight1 is at white knight2's destination" do
+  context "white knight2 is at white knight1's destination" do
     row_knight1 = 5
     col_knight1 = 3
     row_knight2 = 3
@@ -317,6 +317,155 @@ describe ChessBoard do
       chess_board.place(black_knight, row_knight_black, col_knight_black)
       chess_board.move_piece(row_knight_white, col_knight_white, row_knight_black, col_knight_black)
       expected = black_knight.dead
+
+      expect(expected).to be true
+    end
+  end
+end
+
+# Integration tests between board and bishop
+describe ChessBoard do
+  subject(:chess_board) { described_class.new }
+  let(:white_bishop1) { Bishop.new(color: 'white') }
+  let(:white_bishop2) { Bishop.new(color: 'white') }
+  let(:black_bishop) { Bishop.new(color: 'black') }
+
+  context "white bishop2 is at white bishop1's destination" do
+    row_bishop1 = 4
+    col_bishop1 = 4
+    row_bishop2 = 5
+    col_bishop2 = 5
+
+    it 'should not let white bishop1 move' do
+      chess_board.place(white_bishop1, row_bishop1, col_bishop1)
+      chess_board.place(white_bishop2, row_bishop2, col_bishop2)
+      expected = white_bishop1.path_valid?(chess_board, row_bishop1, col_bishop1, row_bishop2, col_bishop2)
+
+      expect(expected).to be false
+    end
+  end
+
+  context "black bishop is at white bishop1's destination" do
+    row_bishop_white = 4
+    col_bishop_white = 4
+    row_bishop_black = 5
+    col_bishop_black = 5
+
+    it 'should let white bishop1 move' do
+      chess_board.place(white_bishop1, row_bishop_white, col_bishop_white)
+      chess_board.place(black_bishop, row_bishop_black, col_bishop_black)
+      expected = white_bishop1.path_valid?(chess_board, row_bishop_white, col_bishop_white, row_bishop_black, col_bishop_black)
+
+      expect(expected).to be true
+    end
+
+    it 'should let white bishop1 kill black bishop' do
+      chess_board.place(white_bishop1, row_bishop_white, col_bishop_white)
+      chess_board.place(black_bishop, row_bishop_black, col_bishop_black)
+      chess_board.move_piece(row_bishop_white, col_bishop_white, row_bishop_black, col_bishop_black)
+      expected = black_bishop.dead
+
+      expect(expected).to be true
+    end
+  end
+end
+
+# Integration tests between board and queen
+describe ChessBoard do
+  subject(:chess_board) { described_class.new }
+  let(:white_queen1) { Queen.new(color: 'white') }
+  let(:white_queen2) { Queen.new(color: 'white') }
+  let(:black_queen) { Queen.new(color: 'black') }
+
+  context "white queen2 is at white queen1's destination" do
+    row_queen1 = 4
+    col_queen1 = 4
+    row_queen2 = 5
+    col_queen2 = 5
+
+    it 'should not let white queen1 move' do
+      chess_board.place(white_queen1, row_queen1, col_queen1)
+      chess_board.place(white_queen2, row_queen2, col_queen2)
+      expected = white_queen1.path_valid?(chess_board, row_queen1, col_queen1, row_queen2, col_queen2)
+
+      expect(expected).to be false
+    end
+  end
+
+  context 'white queen2 is in front of white queen1 while white queen1 move forward' do
+    row_queen1 = 4
+    row_queen2 = 3
+    col_queen = 5
+
+    it 'should not let white queen1 move' do
+      chess_board.place(white_queen1, row_queen1, col_queen)
+      chess_board.place(white_queen2, row_queen2, col_queen)
+      expected = white_queen1.path_valid?(chess_board, row_queen1, col_queen, row_queen2, col_queen)
+
+      expect(expected).to be false
+    end
+  end
+
+  context "black queen is at white queen1's destination" do
+    row_queen_white = 4
+    col_queen_white = 4
+    row_queen_black = 5
+    col_queen_black = 5
+
+    it 'should let white queen1 move' do
+      chess_board.place(white_queen1, row_queen_white, col_queen_white)
+      chess_board.place(black_queen, row_queen_black, col_queen_black)
+      expected = white_queen1.path_valid?(chess_board, row_queen_white, col_queen_white, row_queen_black, col_queen_black)
+
+      expect(expected).to be true
+    end
+  end
+end
+
+# Integration test between board and king
+describe ChessBoard do
+  subject(:chess_board) { described_class.new }
+  let(:white_king1) { King.new(color: 'white') }
+  let(:white_king2) { King.new(color: 'white') }
+  let(:black_king) { King.new(color: 'black') }
+
+  context "white king2 is at white king1's destination" do
+    row_king1 = 4
+    row_king2 = 5
+    col_king = 5
+
+    it 'should not let white king1 move' do
+      chess_board.place(white_king1, row_king1, col_king)
+      chess_board.place(white_king2, row_king2, col_king)
+      expected = white_king1.path_valid?(chess_board, row_king1, col_king, row_king2, col_king)
+
+      expect(expected).to be false
+    end
+  end
+
+  context 'white king2 is in front of white king1 while white king1 move forward' do
+    row_king1 = 4
+    row_king2 = 3
+    col_king = 5
+
+    it 'should not let white king1 move' do
+      chess_board.place(white_king1, row_king1, col_king)
+      chess_board.place(white_king2, row_king2, col_king)
+      expected = white_king1.path_valid?(chess_board, row_king1, col_king, row_king2, col_king)
+
+      expect(expected).to be false
+    end
+  end
+
+  context "black king is at white king1's destination" do
+    row_king_white = 4
+    row_king_black = 5
+    col_king = 5
+
+    it 'should let white king1 move' do
+      chess_board.place(white_king1, row_king_white, col_king)
+      chess_board.place(black_king, row_king_black, col_king)
+      expected = white_king1.path_valid?(chess_board, row_king_white, col_king, row_king_black, col_king)
 
       expect(expected).to be true
     end

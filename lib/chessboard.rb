@@ -18,9 +18,8 @@ class ChessBoard
   end
 
   def movable?(old_row, old_col, new_row, new_col)
-    # chess_piece = layout[old_row, old_col]
-
-    # chess_piece.reachable?(old_row, old_col, new_row, new_col)
+    chess_piece = layout[old_row, old_col]
+    chess_piece.path_valid?(self, old_row, old_col,new_row, new_col)
   end
 
   def move_piece(old_row, old_col, new_row, new_col)

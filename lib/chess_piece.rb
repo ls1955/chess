@@ -19,17 +19,17 @@ class BasicChessPiece
     !ally?(chess_piece)
   end
 
+  # NOTE: seems obsolete, might remove it in the future
   def kill(chess_piece)
     chess_piece.dead = true
   end
 
+  # NOTE: it will implicit kill the enemy if enemy present at destination
   def path_valid?(_board, _old_row, _old_col, _new_row, _new_col)
-    nil
+    raise NotImplementedError, 'Method is not overwrited'
   end
 
-  def promote!(_chess_piece)
-    nil
-  end
+  def promote!(_chess_piece); end
 
   def reachable?(old_row, old_col, new_row, new_col)
     reachable_places(old_row, old_col).include?([new_row, new_col])
@@ -98,7 +98,7 @@ end
 
 class Rook < BasicChessPiece
   def path_valid?(board, old_row, old_col, new_row, new_col)
-    return unless reachable?(old_row, old_col, new_row, new_col)
+    return false unless reachable?(old_row, old_col, new_row, new_col)
 
     if old_row > new_row
       distance = old_row - new_row
@@ -111,7 +111,7 @@ class Rook < BasicChessPiece
     elsif old_col > new_col
       distance = old_col - new_col
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offet) && ally?(board.chess_piece(old_row, old_col - offset)) }
+      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offset) && ally?(board.chess_piece(old_row, old_col - offset)) }
     else
       distance = new_col - old_col
 
@@ -162,6 +162,32 @@ class Knight < BasicChessPiece
 end
 
 class Bishop < BasicChessPiece
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    return false unless reachable?(old_row, old_col, new_row, new_col)
+
+    if old_row > new_row && old_col > new_col
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col - offset) && ally?(board.chess_pice(old_row - offset, old_col - offset)) }
+    elsif old_row > new_col && old_col < new_col
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col + offset) && ally?(board.chess_piece(old_row - offset, old_col + offset)) }
+    elsif old_row < new_row && old_col > new_col
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col - offset) && ally?(board.chess_piece(old_row + offset, old_col - offset)) }
+    else
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col + offset) && ally?(board.chess_piece(old_row + offset, old_col + offset)) }
+    end
+
+    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
+
+    true
+  end
+
   def reachable_places(old_row, old_col)
     (-7..7).each_with_object([]) do |offset, places|
       places << [old_row + offset, old_col + offset]
@@ -174,6 +200,52 @@ class Bishop < BasicChessPiece
 end
 
 class Queen < BasicChessPiece
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    return false unless reachable?(old_row, old_col, new_row, new_col)
+
+    # bishop path detection
+    if old_row > new_row && old_col > new_col
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col - offset) && ally?(board.chess_pice(old_row - offset, old_col - offset)) }
+    elsif old_row > new_col && old_col < new_col
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col + offset) && ally?(board.chess_piece(old_row - offset, old_col + offset)) }
+    elsif old_row < new_row && old_col > new_col
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col - offset) && ally?(board.chess_piece(old_row + offset, old_col - offset)) }
+    elsif old_row < new_row && old_col < new_col
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col + offset) && ally?(board.chess_piece(old_row + offset, old_col + offset)) }
+    end
+
+    # rook path detection
+    if old_row > new_row
+      distance = old_row - new_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col) && ally?(board.chess_piece(old_row - offset, old_col)) }
+    elsif old_row < new_row
+      distance = new_row - old_row
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col) && ally?(board.chess_piece(old_row + offset, old_col)) }
+    elsif old_col > new_col
+      distance = old_col - new_col
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offet) && ally?(board.chess_piece(old_row, old_col - offset)) }
+    else
+      distance = new_col - old_col
+
+      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col + offset) && ally?(board.chess_piece(old_row, old_col + offset)) }
+    end
+
+    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
+
+    true
+  end
+
   def reachable_places(old_row, old_col)
     (-7..7).each_with_object([]) do |offset, places|
       places << [old_row + offset, old_col + offset]
@@ -188,6 +260,24 @@ class Queen < BasicChessPiece
 end
 
 class King < BasicChessPiece
+  def path_valid?(board, old_row, old_col, new_row, new_col)
+    return false unless reachable?(old_row, old_col, new_row, new_col)
+
+    if old_row > new_row
+      return false if board.occupy?(old_row - 1, old_col) && ally?(board.chess_piece(old_row - 1, old_col))
+    elsif old_row < new_row
+      return false if board.occupy?(old_row + 1, old_col) && ally?(board.chess_piece(old_row + 1, old_col))
+    elsif old_col > new_col
+      return false if board.occupy?(old_row, old_col - 1) && ally?(board.chess_piece(old_row, old_col - 1))
+    else
+      return false if board.occupy?(old_row, old_col + 1) && ally?(board.chess_piece(old_row, old_col + 1))
+    end
+
+    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col) && enemy?(board.chess_piece(new_row, new_col))
+
+    true
+  end
+
   def reachable_places(old_row, old_col)
     (-1..1).each_with_object([]) do |offset, places|
       places << [old_row + offset, old_col]
