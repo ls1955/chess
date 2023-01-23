@@ -10,13 +10,11 @@ describe BasicChessPiece do
   describe '#ally?' do
     it 'return true if they have same color' do
       result = black_chess_piece1.ally?(black_chess_piece2)
-
       expect(result).to be true
     end
 
     it 'return false if they have different color' do
       result = black_chess_piece1.ally?(white_chess_piece1)
-
       expect(result).to be false
     end
   end
@@ -31,14 +29,12 @@ describe Pawn do
     it 'can move one step up' do
       new_row = 6
       result = pawn.reachable?(old_row, old_col, new_row, old_col)
-
       expect(result).to be true
     end
 
     it 'cannot move one step down' do
       new_row = 8
       result = pawn.reachable?(old_row, old_col, new_row, old_col)
-
       expect(result).to be false
     end
 
@@ -46,7 +42,6 @@ describe Pawn do
       pawn.instance_variable_set(:@had_move_once, false)
       new_row = 5
       result = pawn.reachable?(old_row, old_col, new_row, old_col)
-
       expect(result).to be true
     end
 
@@ -54,7 +49,6 @@ describe Pawn do
       pawn.instance_variable_set(:@had_move_once, true)
       new_row = 5
       result = pawn.reachable?(old_row, old_col, new_row, old_col)
-
       expect(result).to be false
     end
   end

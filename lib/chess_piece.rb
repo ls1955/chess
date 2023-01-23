@@ -2,13 +2,12 @@
 
 class BasicChessPiece
   attr_reader :color
-  attr_accessor :symbol, :had_move_once, :dead
+  attr_accessor :symbol, :had_move_once
 
   def initialize(color: '')
     @symbol = ''
     @color = color
     @had_move_once = false
-    @dead = false
   end
 
   def ally?(chess_piece)
@@ -19,24 +18,28 @@ class BasicChessPiece
     !ally?(chess_piece)
   end
 
-  # NOTE: seems obsolete, might remove it in the future
-  def kill(chess_piece)
-    chess_piece.dead = true
+  def enemy_block_path?(board, row, col, dest_row, dest_col)
+    return [row, col] != [dest_row, dest_col] if enemy_in_path?(board, row, col)
   end
 
-  # NOTE: it will implicit kill the enemy if enemy present at destination
+  def important?
+    false
+  end
+
   def path_valid?(_board, _old_row, _old_col, _new_row, _new_col)
-    raise NotImplementedError, 'Method is not overwrited'
+    raise NotImplementedError, '#path_valid? is not implemented'
   end
 
-  def promote!(_chess_piece); end
+  def promote?
+    false
+  end
 
   def reachable?(old_row, old_col, new_row, new_col)
     reachable_places(old_row, old_col).include?([new_row, new_col])
   end
 
   def reachable_places(_old_row, _old_col)
-    []
+    raise NotImplementedError, '#reachable_places is not implemented'
   end
 
   def to_s
@@ -46,45 +49,47 @@ class BasicChessPiece
   def unreachable?(row, col)
     !reachable?(row, col)
   end
+
+  private
+
+  def ally_in_path?(board, row, col)
+    board.occupy?(row, col) && ally?(board.chess_piece(row, col))
+  end
+
+  def enemy_in_path?(board, row, col)
+    board.occupy?(row, col) && enemy?(board.chess_piece(row, col))
+  end
 end
 
 class Pawn < BasicChessPiece
   def path_valid?(board, old_row, old_col, new_row, new_col)
-    if [old_row - 2, old_col] == [new_row, new_col]
-      return false if board.occupy?(old_row - 2, old_col) || board.occupy?(old_row - 1, old_col)
+    case [new_row, new_col]
+    when [old_row - 2, old_col]
+      board.unoccupy?(old_row - 2, old_col) && board.unoccupy?(old_row - 1, old_col)
+    when [old_row - 1, old_col]
+      board.unoccupy?(old_row - 1, old_col)
+    when [old_row - 1, old_col - 1]
+      return false if board.unoccupy?(old_row - 1, old_col - 1)
 
-      true
-    elsif [old_row - 1, old_col] == [new_row, new_col]
-      return false if board.occupy?(old_row - 1, old_col)
+      enemy?(board.chess_piece(old_row - 1, old_col - 1))
+    when [old_row - 1, old_col + 1]
+      return false if board.unoccupy?(old_row - 1, old_col + 1)
 
-      true
-    elsif [old_row - 1, old_col - 1] == [new_row, new_col]
-      return false unless board.occupy?(old_row - 1, old_col - 1)
-
-      if ally?(board.chess_piece(old_row - 1, old_col - 1))
-        false
-      else
-        kill(board.chess_piece(old_row - 1, old_col - 1))
-        true
-      end
-    elsif [old_row - 1, old_col + 1] == [new_row, new_col]
-      return false unless board.occupy?(old_row - 1, old_col + 1)
-
-      if ally?(board.chess_piece(old_row - 1, old_col + 1))
-        false
-      else
-        kill(board.chess_piece(old_row - 1, old_col + 1))
-        true
-      end
+      enemy?(board.chess_piece(old_row - 1, old_col + 1))
     else
       false
     end
   end
 
+  def promote?
+    true
+  end
+
   def reachable?(old_row, old_col, new_row, new_col)
-    if [old_row - 2, old_col] == [new_row, new_col]
-      had_move_once ? false : true
-    elsif [old_row - 1, old_col] == [new_row, new_col]
+    case [new_row, new_col]
+    when [old_row - 2, old_col]
+      !had_move_once
+    when [old_row - 1, old_col]
       true
     else
       false
@@ -103,22 +108,20 @@ class Rook < BasicChessPiece
     if old_row > new_row
       distance = old_row - new_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col) && ally?(board.chess_piece(old_row - offset, old_col)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col) || enemy_block_path?(board, old_row - offset, old_col, new_row, new_col) }
     elsif old_row < new_row
       distance = new_row - old_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col) && ally?(board.chess_piece(old_row + offset, old_col)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col) || enemy_block_path?(board, old_row + offset, old_col, new_row, new_col) }
     elsif old_col > new_col
       distance = old_col - new_col
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offset) && ally?(board.chess_piece(old_row, old_col - offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row, old_col - offset) || enemy_block_path?(board, old_row, old_col - offset, new_row, new_col) }
     else
       distance = new_col - old_col
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col + offset) && ally?(board.chess_piece(old_row, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row, old_col + offset) || enemy_block_path?(board, old_row, old_col + offset, new_row, new_col) }
     end
-
-    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
 
     true
   end
@@ -137,14 +140,7 @@ end
 
 class Knight < BasicChessPiece
   def path_valid?(board, old_row, old_col, new_row, new_col)
-    return false unless reachable?(old_row, old_col, new_row, new_col)
-
-    if enemy?(board.chess_piece(new_row, new_col))
-      kill(board.chess_piece(new_row, new_col))
-      true
-    else
-      false
-    end
+    reachable?(old_row, old_col, new_row, new_col) && !ally_in_path?(board, new_row, new_col)
   end
 
   def reachable_places(old_row, old_col)
@@ -162,28 +158,20 @@ class Knight < BasicChessPiece
 end
 
 class Bishop < BasicChessPiece
+  # FIXME: faulty path detection
   def path_valid?(board, old_row, old_col, new_row, new_col)
     return false unless reachable?(old_row, old_col, new_row, new_col)
 
+    distance = (old_row - new_row).abs
     if old_row > new_row && old_col > new_col
-      distance = old_row - new_row
-
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col - offset) && ally?(board.chess_pice(old_row - offset, old_col - offset)) }
-    elsif old_row > new_col && old_col < new_col
-      distance = old_row - new_row
-
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col + offset) && ally?(board.chess_piece(old_row - offset, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col - offset) || enemy_block_path?(board, old_row - offset, old_col - offset, new_row, new_col) }
+    elsif old_row > new_row && old_col < new_col
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col + offset) || enemy_block_path?(board, old_row - offset, old_col + offset, new_row, new_col) }
     elsif old_row < new_row && old_col > new_col
-      distance = new_row - old_row
-
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col - offset) && ally?(board.chess_piece(old_row + offset, old_col - offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col - offset) || enemy_block_path?(board, old_row + offset, old_col - offset, new_row, new_col) }
     else
-      distance = new_row - old_row
-
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col + offset) && ally?(board.chess_piece(old_row + offset, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col + offset) || enemy_block_path?(board, old_row + offset, old_col + offset, new_row, new_col) }
     end
-
-    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
 
     true
   end
@@ -200,6 +188,7 @@ class Bishop < BasicChessPiece
 end
 
 class Queen < BasicChessPiece
+  # faulty path detection
   def path_valid?(board, old_row, old_col, new_row, new_col)
     return false unless reachable?(old_row, old_col, new_row, new_col)
 
@@ -207,41 +196,39 @@ class Queen < BasicChessPiece
     if old_row > new_row && old_col > new_col
       distance = old_row - new_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col - offset) && ally?(board.chess_pice(old_row - offset, old_col - offset)) }
-    elsif old_row > new_col && old_col < new_col
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col - offset) || enemy_block_path?(board, old_row - offset, old_col - offset, new_row, new_col) }
+    elsif old_row > new_row && old_col < new_col
       distance = old_row - new_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col + offset) && ally?(board.chess_piece(old_row - offset, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col + offset) || enemy_block_path?(board, old_row - offset, old_col + offset, new_row, new_col) }
     elsif old_row < new_row && old_col > new_col
       distance = new_row - old_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col - offset) && ally?(board.chess_piece(old_row + offset, old_col - offset)) }
-    elsif old_row < new_row && old_col < new_col
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col - offset) || enemy_block_path?(board, old_row + offset, old_col - offset, new_row, new_col) }
+    else
       distance = new_row - old_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col + offset) && ally?(board.chess_piece(old_row + offset, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col + offset) || enemy_block_path?(board, old_row + offset, old_col + offset, new_row, new_col) }
     end
 
     # rook path detection
     if old_row > new_row
       distance = old_row - new_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row - offset, old_col) && ally?(board.chess_piece(old_row - offset, old_col)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row - offset, old_col) || enemy_block_path?(board, old_row - offset, old_col, new_row, new_col) }
     elsif old_row < new_row
       distance = new_row - old_row
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row + offset, old_col) && ally?(board.chess_piece(old_row + offset, old_col)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row + offset, old_col) || enemy_block_path?(board, old_row + offset, old_col, new_row, new_col) }
     elsif old_col > new_col
       distance = old_col - new_col
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col - offet) && ally?(board.chess_piece(old_row, old_col - offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row, old_col - offset) || enemy_block_path?(board, old_row, old_col - offset, new_row, new_col) }
     else
       distance = new_col - old_col
 
-      (1..distance).each { |offset| return false if board.occupy?(old_row, old_col + offset) && ally?(board.chess_piece(old_row, old_col + offset)) }
+      (1..distance).each { |offset| return false if ally_in_path?(board, old_row, old_col + offset) || enemy_block_path?(board, old_row, old_col + offset, new_row, new_col) }
     end
-
-    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col)
 
     true
   end
@@ -260,20 +247,22 @@ class Queen < BasicChessPiece
 end
 
 class King < BasicChessPiece
+  def important?
+    true
+  end
+
   def path_valid?(board, old_row, old_col, new_row, new_col)
     return false unless reachable?(old_row, old_col, new_row, new_col)
 
     if old_row > new_row
-      return false if board.occupy?(old_row - 1, old_col) && ally?(board.chess_piece(old_row - 1, old_col))
+      return false if ally_in_path?(board, old_row - 1, old_col) || enemy_block_path?(board, old_row - 1, old_col, new_row, new_col)
     elsif old_row < new_row
-      return false if board.occupy?(old_row + 1, old_col) && ally?(board.chess_piece(old_row + 1, old_col))
+      return false if ally_in_path?(board, old_row + 1, old_col) || enemy_block_path?(board, old_row + 1, old_col, new_row, new_col)
     elsif old_col > new_col
-      return false if board.occupy?(old_row, old_col - 1) && ally?(board.chess_piece(old_row, old_col - 1))
+      return false if ally_in_path?(board, old_row, old_col - 1) || enemy_block_path?(board, old_row, old_col - 1, new_row, new_col)
     else
-      return false if board.occupy?(old_row, old_col + 1) && ally?(board.chess_piece(old_row, old_col + 1))
+      return false if ally_in_path?(board, old_row, old_col + 1) || enemy_block_path?(board, old_row, old_col + 1, new_row, new_col)
     end
-
-    kill(board.chess_piece(new_row, new_col)) if board.occupy?(new_row, new_col) && enemy?(board.chess_piece(new_row, new_col))
 
     true
   end

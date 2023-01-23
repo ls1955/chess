@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative './../lib/chessboard'
+require_relative './../lib/chess_board'
 require_relative './../lib/chess_piece'
 
 describe ChessBoard do
-  subject(:chessboard) { described_class.new }
+  subject(:chess_board) { described_class.new }
   let(:chess_piece) { Pawn.new(color: 'black') }
 
   context 'after initialization' do
@@ -20,7 +20,7 @@ describe ChessBoard do
         [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']
       ]
 
-      expect(chessboard.layout).to eq(expected)
+      expect(chess_board.layout).to eq(expected)
     end
 
     it 'show an empty board' do
@@ -38,25 +38,58 @@ describe ChessBoard do
            a b c d e f g h
       BOARD
 
-      expect(chessboard.to_s).to eq(expected)
+      expect(chess_board.to_s).to eq(expected)
     end
   end
 
   describe '#chess_piece' do
     it 'return the chess at given row and column index' do
-      chessboard.place(chess_piece, 0, 0)
+      chess_board.place(chess_piece, 0, 0)
 
-      expected = chessboard.chess_piece(0, 0)
+      expected = chess_board.chess_piece(0, 0)
 
       expect(expected).to be chess_piece
+    end
+  end
+
+  describe '#in_check?' do
+    subject(:white_king) { King.new(color: 'white') }
+    subject(:black_queen) { Queen.new(color: 'black') }
+
+    context 'when black queen is beside white king' do
+      it 'is in check' do
+        row_king_white = 0
+        col_king_white = 0
+        row_queen_black = 0
+        col_queen_black = 1
+        chess_board.place(white_king, row_king_white, col_king_white)
+        chess_board.place(black_queen, row_queen_black, col_queen_black)
+        result = chess_board.in_check?(curr_color: 'white', enemy_color: 'black')
+
+        expect(result).to be true
+      end
+    end
+
+    context 'when black queen is far away from white king' do
+      it 'should not in check' do
+        row_king_white = 0
+        col_king_white = 0
+        row_queen_black = 7
+        col_queen_black = 6
+        chess_board.place(white_king, row_king_white, col_king_white)
+        chess_board.place(black_queen, row_queen_black, col_queen_black)
+        result = chess_board.in_check?(curr_color: 'white', enemy_color: 'black')
+
+        expect(result).to be false
+      end
     end
   end
 
   describe '#move_piece' do
     context 'when given a chess piece previous and new row and column index' do
       it 'moves the chess to desirable slot' do
-        chessboard.place(chess_piece, 7, 0)
-        chessboard.move_piece(7, 0, 6, 0)
+        chess_board.place(chess_piece, 7, 0)
+        chess_board.move_piece(7, 0, 6, 0)
 
         expected = <<~BOARD
              a b c d e f g h
@@ -72,7 +105,7 @@ describe ChessBoard do
              a b c d e f g h
         BOARD
 
-        expect(chessboard.to_s).to eq(expected)
+        expect(chess_board.to_s).to eq(expected)
       end
     end
   end
@@ -80,15 +113,15 @@ describe ChessBoard do
   describe '#occupy?' do
     context 'when given a row and column index' do
       it 'return true if slot is occupy' do
-        chessboard.place(chess_piece, 3, 5)
+        chess_board.place(chess_piece, 3, 5)
 
-        expect(chessboard.occupy?(3, 5)).to be true
+        expect(chess_board.occupy?(3, 5)).to be true
       end
 
       it 'return false if slot is not occupy' do
-        chessboard.place(chess_piece, 3, 7)
+        chess_board.place(chess_piece, 3, 7)
 
-        expect(chessboard.occupy?(3, 5)).to be false
+        expect(chess_board.occupy?(3, 5)).to be false
       end
     end
   end
@@ -96,7 +129,7 @@ describe ChessBoard do
   describe '#place' do
     context 'when given a chess piece row and column index' do
       it 'place the chess at desirable slot' do
-        chessboard.place(chess_piece, 7, 0)
+        chess_board.place(chess_piece, 7, 0)
 
         expected = <<~BOARD
              a b c d e f g h
@@ -112,14 +145,14 @@ describe ChessBoard do
              a b c d e f g h
         BOARD
 
-        expect(chessboard.to_s).to eq(expected)
+        expect(chess_board.to_s).to eq(expected)
       end
     end
   end
 
   describe '#place_chess_pieces_at_begin' do
     it 'place the chess pieces at the beginning' do
-      chessboard.place_chess_pieces_at_begin
+      chess_board.place_chess_pieces_at_begin
 
       expected = <<~BOARD
            a b c d e f g h
@@ -135,29 +168,7 @@ describe ChessBoard do
            a b c d e f g h
       BOARD
 
-      expect(chessboard.to_s).to eq(expected)
-    end
-  end
-
-  describe '#tile_color' do
-    context "when given a row and column index" do
-      it 'first row, first column is white' do
-        color = chessboard.tile_color(0, 0)
-
-        expect(color).to eq('white')
-      end
-
-      it 'first row, second column is black' do
-        color = chessboard.tile_color(0, 1)
-
-        expect(color).to eq('black')
-      end
-
-      it 'last row, last column is white' do
-        color = chessboard.tile_color(7, 7)
-
-        expect(color).to eq('white')
-      end
+      expect(chess_board.to_s).to eq(expected)
     end
   end
 
@@ -167,7 +178,7 @@ describe ChessBoard do
         row = 0
         col = 0
 
-        expected = chessboard.unoccupy?(row, col)
+        expected = chess_board.unoccupy?(row, col)
 
         expect(expected).to be true
       end
@@ -175,9 +186,9 @@ describe ChessBoard do
       it 'return false if there is chess piece' do
         row = 0
         col = 0
-        chessboard.place(chess_piece, 0, 0)
+        chess_board.place(chess_piece, 0, 0)
 
-        expected = chessboard.unoccupy?(row, col)
+        expected = chess_board.unoccupy?(row, col)
 
         expect(expected).to be false
       end
@@ -219,14 +230,29 @@ describe ChessBoard do
 
       expect(expected).to be true
     end
+  end
 
-    it 'should let white pawn1 kill black pawn' do
-      chess_board.place(white_pawn1, row_pawn_white, col_pawn_white)
-      chess_board.place(black_pawn, row_pawn_black, col_pawn_black)
-      chess_board.move_piece(row_pawn_white, col_pawn_white, row_pawn_black, col_pawn_black)
-      expected = black_pawn.dead
-
-      expect(expected).to be true
+  describe '#turn_around' do
+    context 'after the board is turn around' do
+      it 'shows the view from other side' do
+        chess_board.place_chess_pieces_at_begin
+        chess_board.turn_around
+        view = chess_board.to_s
+        expected = <<~BOARD
+             a b c d e f g h
+          8 |♖|♘|♗|♔|♕|♗|♘|♖| 8
+          7 |♙|♙|♙|♙|♙|♙|♙|♙| 7
+          6 | | | | | | | | | 6
+          5 | | | | | | | | | 5
+          4 | | | | | | | | | 4
+          3 | | | | | | | | | 3
+          2 |♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎|♟︎| 2
+          1 |♜|♞|♝|♚|♛|♝|♞|♜| 1
+            -----------------
+             a b c d e f g h
+        BOARD
+        expect(expected).to eq(view)
+      end
     end
   end
 end
@@ -236,7 +262,8 @@ describe ChessBoard do
   subject(:chess_board) { described_class.new }
   let(:white_rook1) { Rook.new(color: 'white') }
   let(:white_rook2) { Rook.new(color: 'white') }
-  let(:black_rook) { Rook.new(color: 'black') }
+  let(:black_rook1) { Rook.new(color: 'black') }
+  let(:black_rook2) { Rook.new(color: 'black') }
 
   context 'white rook1 is in front of white rook2' do
     row_rook1 = 7
@@ -252,26 +279,33 @@ describe ChessBoard do
     end
   end
 
-  context 'when black rook is at top  of white rook1' do
+  context 'when black rook1 is at top of white rook1' do
     row_rook_white = 7
     row_rook_black = 6
     col_rook = 4
 
-    it "should let white rook1 move to black rook's slot" do
+    it "should let white rook1 move to black rook1's slot" do
       chess_board.place(white_rook1, row_rook_white, col_rook)
-      chess_board.place(black_rook, row_rook_black, col_rook)
+      chess_board.place(black_rook1, row_rook_black, col_rook)
       expected = white_rook1.path_valid?(chess_board, row_rook_white, col_rook, row_rook_black, col_rook)
 
       expect(expected).to be true
     end
+  end
 
-    it 'should let white rook1 kill black rook' do
+  context 'when black rook1 is in front black rook2, white rook move to black rook2' do
+    row_rook_white = 7
+    row_rook1_black = 6
+    row_rook2_black = 5
+    col_rook = 4
+
+    it "should not let white rook1 move to black rook2's slot" do
       chess_board.place(white_rook1, row_rook_white, col_rook)
-      chess_board.place(black_rook, row_rook_black, col_rook)
-      chess_board.move_piece(row_rook_white, col_rook, row_rook_black, col_rook)
-      expected = black_rook.dead
+      chess_board.place(black_rook1, row_rook1_black, col_rook)
+      chess_board.place(black_rook2, row_rook2_black, col_rook)
+      expected = white_rook1.path_valid?(chess_board, row_rook_white, col_rook, row_rook2_black, col_rook)
 
-      expect(expected).to be true
+      expect(expected).to be false
     end
   end
 end
@@ -311,15 +345,6 @@ describe ChessBoard do
 
       expect(expected).to be true
     end
-
-    it 'should let white knight1 kill black knight' do
-      chess_board.place(white_knight1, row_knight_white, col_knight_white)
-      chess_board.place(black_knight, row_knight_black, col_knight_black)
-      chess_board.move_piece(row_knight_white, col_knight_white, row_knight_black, col_knight_black)
-      expected = black_knight.dead
-
-      expect(expected).to be true
-    end
   end
 end
 
@@ -355,15 +380,6 @@ describe ChessBoard do
       chess_board.place(white_bishop1, row_bishop_white, col_bishop_white)
       chess_board.place(black_bishop, row_bishop_black, col_bishop_black)
       expected = white_bishop1.path_valid?(chess_board, row_bishop_white, col_bishop_white, row_bishop_black, col_bishop_black)
-
-      expect(expected).to be true
-    end
-
-    it 'should let white bishop1 kill black bishop' do
-      chess_board.place(white_bishop1, row_bishop_white, col_bishop_white)
-      chess_board.place(black_bishop, row_bishop_black, col_bishop_black)
-      chess_board.move_piece(row_bishop_white, col_bishop_white, row_bishop_black, col_bishop_black)
-      expected = black_bishop.dead
 
       expect(expected).to be true
     end

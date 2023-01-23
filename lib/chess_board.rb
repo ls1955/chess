@@ -17,16 +17,19 @@ class ChessBoard
     layout[row][col]
   end
 
+  def in_check?(curr_color:, enemy_color:)
+    can_enemy_check?(enemy_color, king_coor(curr_color))
+  end
+
   def movable?(old_row, old_col, new_row, new_col)
-    chess_piece = layout[old_row, old_col]
-    chess_piece.path_valid?(self, old_row, old_col,new_row, new_col)
+    chess_piece(old_row, old_col).path_valid?(self, old_row, old_col, new_row, new_col)
   end
 
   def move_piece(old_row, old_col, new_row, new_col)
-    return unless chess_piece(old_row, old_col).path_valid?(self, old_row, old_col, new_row, new_col)
+    return unless occupy?(old_row, old_col) && chess_piece(old_row, old_col).path_valid?(self, old_row, old_col, new_row, new_col)
 
-    place(chess_piece(old_row, old_col), new_row, new_col)
     chess_piece(old_row, old_col).had_move_once = true
+    place(chess_piece(old_row, old_col), new_row, new_col)
     layout[old_row][old_col] = ' '
   end
 
@@ -52,14 +55,6 @@ class ChessBoard
     end
   end
 
-  def tile_color(row, col)
-    if row.even? == col.even?
-      'white'
-    else
-      'black'
-    end
-  end
-
   def to_s
     a_to_h = ('a'..'h').to_a.join(' ')
     s = "   #{a_to_h}\n"
@@ -75,5 +70,30 @@ class ChessBoard
 
   def unoccupy?(row, col)
     !occupy?(row, col)
+  end
+
+  def turn_around
+    layout.map!(&:reverse)
+    layout.reverse!
+  end
+
+  private
+
+  def can_enemy_check?(enemy_color, king_coor)
+    layout.each_with_index do |row, i|
+      row.each_with_index do |piece, j|
+        return true if occupy?(i, j) && piece.color == enemy_color && piece.path_valid?(self, i, j, king_coor[0], king_coor[1])
+      end
+    end
+
+    false
+  end
+
+  def king_coor(curr_color)
+    layout.each_with_index do |row, i|
+      row.each_with_index do |piece, j|
+        return [i, j] if occupy?(i, j) && piece.color == curr_color && piece.important?
+      end
+    end
   end
 end
