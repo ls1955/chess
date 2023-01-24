@@ -2,7 +2,6 @@
 
 require_relative './chess_board'
 
-# chess game
 class Chess
   attr_reader :player_round, :turn_counter
   attr_accessor :is_game_over, :has_resign, :board
@@ -57,6 +56,38 @@ class Chess
     current_player == 'white' ? 'black' : 'white'
   end
 
+  def promote_piece
+    puts <<~PROMPT
+
+
+    ------------------------------------------
+                Promote the pawn?
+      Here is the one time chance for promotion
+        To promote it, type in a class name
+      Ex: [Pawn, Knight, Rook, Bishop, Queen]
+      Type anything else to ignore promotion
+    ------------------------------------------
+
+
+    PROMPT
+    klass = gets.chomp.capitalize
+    pawn_row, pawn_col = board.promotable_piece_coor
+
+    case klass
+    when 'Pawn'
+      puts 'Really?'
+    when 'Rook'
+      board.place(Rook.new(color: current_player), pawn_row, pawn_col)
+    when 'Knight'
+      board.place(Knight.new(color: current_player), pawn_row, pawn_col)
+    when 'Bishop'
+      board.place(Bishop.new(color: current_player), pawn_row, pawn_col)
+    when 'Queen'
+      puts 'Ah, the classic choice.'
+      board.place(Queen.new(color: current_player), pawn_row, pawn_col)
+    end
+  end
+
   def select_piece
     loop do
       puts <<~PROMPT
@@ -79,7 +110,15 @@ class Chess
         puts 'Game has been saved.'
         # exit
       elsif invalid?(input_str)
-        puts 'Invalid coordinate selected.'
+        puts <<~PROMPT
+
+
+        ------------------------------------------
+                  Identical place selected
+        ------------------------------------------
+
+
+        PROMPT
         next
       end
 
@@ -87,10 +126,26 @@ class Chess
       chess_piece = board.chess_piece(from_row, from_col)
 
       if board.unoccupy?(from_row, from_col)
-        puts 'There is no chess there.'
+        puts <<~PROMPT
+
+
+        ------------------------------------------
+                      No chess there
+        ------------------------------------------
+
+
+        PROMPT
         next
       elsif chess_piece.color != player_round
-        puts 'This is not your chess.'
+        puts <<~PROMPT
+
+
+        ------------------------------------------
+                      Not your chess
+        ------------------------------------------
+
+
+        PROMPT
         next
       end
 
@@ -114,14 +169,30 @@ class Chess
       return select_piece if input_str == 'redo'
 
       if invalid?(input_str)
-        puts 'Invalid coordinate selected'
+        puts <<~PROMPT
+
+
+        ------------------------------------------
+                    Invalid coordinate
+        ------------------------------------------
+
+
+        PROMPT
         next
       end
 
       to_row, to_col = input2row_col(input_str)
 
       if [from_row, from_col] == [to_row, to_col]
-        puts 'Identical place selected'
+        puts <<~PROMPT
+
+
+        ------------------------------------------
+                    Identical place selected
+        ------------------------------------------
+
+
+        PROMPT
         next
       elsif !board.movable?(from_row, from_col, to_row, to_col)
         puts <<~PROMPT
@@ -160,6 +231,9 @@ class Chess
     loop do
       from_row, from_col, to_row, to_col = select_piece
       board.move_piece(from_row, from_col, to_row, to_col)
+
+      promote_piece if board.has_promote?
+
       switch_round
     end
   end

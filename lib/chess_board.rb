@@ -2,7 +2,6 @@
 
 require_relative './chess_piece'
 
-# chessboard
 class ChessBoard
   ROW_AMOUNT = 8
   COL_AMOUNT = 8
@@ -15,6 +14,14 @@ class ChessBoard
 
   def chess_piece(row, col)
     layout[row][col]
+  end
+
+  def has_promote?
+    COL_AMOUNT.times do |i|
+      return true if occupy?(0, i) && chess_piece(0, i).promote?
+    end
+
+    false
   end
 
   def in_check?(curr_color:, enemy_color:)
@@ -55,6 +62,14 @@ class ChessBoard
     end
   end
 
+  def promotable_piece_coor
+    COL_AMOUNT.times do |i|
+      return [0, i] if occupy?(0, i) && chess_piece(0, i).promote?
+    end
+
+    [-1, -1]
+  end
+
   def to_s
     a_to_h = ('a'..'h').to_a.join(' ')
     s = "   #{a_to_h}\n"
@@ -82,7 +97,7 @@ class ChessBoard
   def can_enemy_check?(enemy_color, king_coor)
     layout.each_with_index do |row, i|
       row.each_with_index do |piece, j|
-        return true if occupy?(i, j) && piece.color == enemy_color && piece.path_valid?(self, i, j, king_coor[0], king_coor[1])
+        return true if occupy?(i, j) && piece.color == enemy_color && piece.path_valid?(self, i, j, king_coor[0], king_coor[1], as_enemy: true)
       end
     end
 

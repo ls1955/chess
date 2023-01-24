@@ -52,9 +52,29 @@ describe ChessBoard do
     end
   end
 
+  describe '#has_promote?' do
+    it 'return false if no pawn reach the first row' do
+      chess_board.place_chess_pieces_at_begin
+      result = chess_board.has_promote?
+
+      expect(result).to be false
+    end
+
+    it 'return true if pawn reach the first row' do
+      white_pawn = Pawn.new(color: 'white')
+      row_pawn_white = 0
+      col_pawn_white = 0
+      chess_board.place(white_pawn, row_pawn_white, col_pawn_white)
+      result = chess_board.has_promote?
+
+      expect(result).to be true
+    end
+  end
+
   describe '#in_check?' do
     subject(:white_king) { King.new(color: 'white') }
     subject(:black_queen) { Queen.new(color: 'black') }
+    subject(:black_pawn) { Pawn.new(color: 'black') }
 
     context 'when black queen is beside white king' do
       it 'is in check' do
@@ -70,7 +90,7 @@ describe ChessBoard do
       end
     end
 
-    context 'when black queen is far away from white king' do
+    context 'when white king is not in range of black king' do
       it 'should not in check' do
         row_king_white = 0
         col_king_white = 0
@@ -78,6 +98,20 @@ describe ChessBoard do
         col_queen_black = 6
         chess_board.place(white_king, row_king_white, col_king_white)
         chess_board.place(black_queen, row_queen_black, col_queen_black)
+        result = chess_board.in_check?(curr_color: 'white', enemy_color: 'black')
+
+        expect(result).to be false
+      end
+    end
+
+    context 'when white king is behind black pawn' do
+      it 'should not in check' do
+        row_pawn_black = 1
+        col_pawn_black = 1
+        row_king_white = 0
+        col_king_white = 0
+        chess_board.place(white_king, row_king_white, col_king_white)
+        chess_board.place(black_pawn, row_pawn_black, col_pawn_black)
         result = chess_board.in_check?(curr_color: 'white', enemy_color: 'black')
 
         expect(result).to be false
