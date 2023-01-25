@@ -12,6 +12,10 @@ class ChessBoard
     @layout = Array.new(ROW_AMOUNT) { Array.new(COL_AMOUNT, ' ') }
   end
 
+  def both_king_alive?
+    king_amount == 2
+  end
+
   def chess_piece(row, col)
     layout[row][col]
   end
@@ -26,6 +30,18 @@ class ChessBoard
 
   def in_check?(curr_color:, enemy_color:)
     can_enemy_check?(enemy_color, king_coor(curr_color))
+  end
+
+  def king_amount
+    result = 0
+
+    layout.each_with_index do |row, i|
+      row.each_with_index do |slot, j|
+        result += 1 if occupy?(i, j) && chess_piece(i, j).important?
+      end
+    end
+
+    result
   end
 
   def movable?(old_row, old_col, new_row, new_col)

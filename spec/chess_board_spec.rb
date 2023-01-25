@@ -71,6 +71,38 @@ describe ChessBoard do
     end
   end
 
+  describe '#king_amount' do
+    subject(:white_king) { King.new(color: 'white') }
+    subject(:black_king) { King.new(color: 'black') }
+
+    context 'when there is no king' do
+      it 'return 0' do
+        result = chess_board.king_amount
+
+        expect(result).to eq(0)
+      end
+    end
+
+    context 'when there is 1 king' do
+      it 'return 1' do
+        chess_board.place(white_king, 0, 0)
+        result = chess_board.king_amount
+
+        expect(result).to eq(1)
+      end
+    end
+
+    context 'when there are 2 king' do
+      it 'return 2' do
+        chess_board.place(white_king, 0, 0)
+        chess_board.place(black_king, 0, 1)
+        result = chess_board.king_amount
+
+        expect(result).to eq(2)
+      end
+    end
+  end
+
   describe '#in_check?' do
     subject(:white_king) { King.new(color: 'white') }
     subject(:black_queen) { Queen.new(color: 'black') }

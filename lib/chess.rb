@@ -1,24 +1,27 @@
 # frozen_string_literal: false
 
 require_relative './chess_board'
+require_relative './chess_board_prompt'
 
 class Chess
-  attr_reader :player_round, :turn_counter
+  attr_reader :player_round, :prompt, :turn_counter
   attr_accessor :is_game_over, :has_resign, :board
 
-  def initialize(board = ChessBoard)
+  def initialize(board = ChessBoard, prompt = ChessBoardPrompt)
     @board = board.new
     @has_resign = false
     @is_game_over = false
     @player_round = 'white'
+    @prompt = prompt.new
     @turn_counter = 1
   end
 
   def main
     # provide load game utility at beginning?
+    print_menu
     board.place_chess_pieces_at_begin
     turn
-    closing_statement
+    print_closing_statement
   end
 
   def input2row_col(input)
@@ -40,14 +43,6 @@ class Chess
     player_round == 'white' ? 'white' : 'black'
   end
 
-  def closing_statement
-    if has_resign
-      puts "Winner is #{next_player}"
-    else
-      puts "Winner is #{current_player}"
-    end
-  end
-
   def invalid?(input)
     !valid?(input)
   end
@@ -56,20 +51,16 @@ class Chess
     current_player == 'white' ? 'black' : 'white'
   end
 
+  def closing_statement
+    puts prompt.winner(has_resign ? next_player : current_plaer)
+  end
+
+  # TODO
+  def print_menu
+  end
+
   def promote_piece
-    puts <<~PROMPT
-
-
-    ------------------------------------------
-                Promote the pawn?
-      Here is the one time chance for promotion
-        To promote it, type in a class name
-      Ex: [Pawn, Knight, Rook, Bishop, Queen]
-      Type anything else to ignore promotion
-    ------------------------------------------
-
-
-    PROMPT
+    puts prompt.promotion
     klass = gets.chomp.capitalize
     pawn_row, pawn_col = board.promotable_piece_coor
 
@@ -90,16 +81,8 @@ class Chess
 
   def select_piece
     loop do
-      puts <<~PROMPT
-        #{board}
-        ----------------------------------------
-               Current round: #{player_round}
-                    Turn: #{turn_counter}
-        Please select a chess piece (Ex: a1)
-        Enter 'resign' to forfeit the game
-        Enter 'save' to save & quit the game
-        ----------------------------------------
-      PROMPT
+      puts prompt.check if board.in_check?(curr_color: current_player, enemy_color: next_player)
+      puts prompt.current_round_info(board, player_round, turn_counter)
       input_str = gets.chomp
 
       if input_str == 'resign'
@@ -110,15 +93,7 @@ class Chess
         puts 'Game has been saved.'
         # exit
       elsif invalid?(input_str)
-        puts <<~PROMPT
-
-
-        ------------------------------------------
-                  Identical place selected
-        ------------------------------------------
-
-
-        PROMPT
+        puts prompt.invalid_input
         next
       end
 
@@ -126,26 +101,10 @@ class Chess
       chess_piece = board.chess_piece(from_row, from_col)
 
       if board.unoccupy?(from_row, from_col)
-        puts <<~PROMPT
-
-
-        ------------------------------------------
-                      No chess there
-        ------------------------------------------
-
-
-        PROMPT
+        puts prompt.chess_not_find
         next
       elsif chess_piece.color != player_round
-        puts <<~PROMPT
-
-
-        ------------------------------------------
-                      Not your chess
-        ------------------------------------------
-
-
-        PROMPT
+        puts prompt.wrong_chess_chosen
         next
       end
 
@@ -155,55 +114,23 @@ class Chess
 
   def select_destination(from_row, from_col)
     loop do
-      puts <<~PROMPT
-
-        #{board}
-        ----------------------------------------
-        Please select the destination (Ex: a1)
-        Enter 'redo' to reselect chess piece
-        ----------------------------------------
-
-      PROMPT
+      puts prompt.select_destination
       input_str = gets.chomp
 
       return select_piece if input_str == 'redo'
 
       if invalid?(input_str)
-        puts <<~PROMPT
-
-
-        ------------------------------------------
-                    Invalid coordinate
-        ------------------------------------------
-
-
-        PROMPT
+        puts prompt.invalid_input
         next
       end
 
       to_row, to_col = input2row_col(input_str)
 
       if [from_row, from_col] == [to_row, to_col]
-        puts <<~PROMPT
-
-
-        ------------------------------------------
-                    Identical place selected
-        ------------------------------------------
-
-
-        PROMPT
+        puts prompt.identical_place_selected
         next
       elsif !board.movable?(from_row, from_col, to_row, to_col)
-        puts <<~PROMPT
-
-
-          ----------------------------------------
-                    Invalid move selected
-          ----------------------------------------
-
-
-        PROMPT
+        puts prompt.invalid_move
         next
       end
 
@@ -233,6 +160,8 @@ class Chess
       board.move_piece(from_row, from_col, to_row, to_col)
 
       promote_piece if board.has_promote?
+
+      break unless board.both_king_alive?
 
       switch_round
     end
