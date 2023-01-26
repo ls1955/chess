@@ -13,3 +13,7 @@ Either player could choose to save / forfeit at anytime during the game.
 *Limitation:*
 ------
 Current project does not have the ability of detecting checkmate condition.
+
+*Demo:*
+------
+To run the demon, please click [here](https://replit.com/@LS58/chess) and run the main.rb file from the console.
