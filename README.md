@@ -6,4 +6,10 @@ This project is part of [The Odin Project's curriculum](https://www.theodinproje
 
 A command line [chess](https://en.wikipedia.org/wiki/Chess) game is build  where two players can play against each other.
 
-Either player cuold save and load the game at anytime.
+Player could choose to load saved game at the beginning of the game.
+
+Either player could choose to save / forfeit at anytime during the game.
+
+*Limitation:*
+------
+Current project does not have the ability of detecting checkmate condition.
