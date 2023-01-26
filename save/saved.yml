@@ -1,0 +1,164 @@
+---
+- black
+- 2
+- false
+- - - !ruby/object:Rook
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Knight
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Bishop
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:King
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Queen
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Bishop
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Knight
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Rook
+      symbol: ''
+      color: white
+      had_move_once: false
+  - - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - " "
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: false
+  - - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+  - - " "
+    - " "
+    - " "
+    - " "
+    - !ruby/object:Pawn
+      symbol: ''
+      color: white
+      had_move_once: true
+    - " "
+    - " "
+    - " "
+  - - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+  - - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+    - " "
+  - - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Pawn
+      symbol: ''
+      color: black
+      had_move_once: false
+  - - !ruby/object:Rook
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Knight
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Bishop
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:King
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Queen
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Bishop
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Knight
+      symbol: ''
+      color: black
+      had_move_once: false
+    - !ruby/object:Rook
+      symbol: ''
+      color: black
+      had_move_once: false

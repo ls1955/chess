@@ -30,6 +30,18 @@ class ChessBoardPrompt
     PROMPT
   end
 
+  def game_over(has_resign, curr_player, next_player)
+    <<~PROMPT
+
+
+        ------------------------------------------
+                    The winner is #{has_resign ? next_player : curr_player}
+        ------------------------------------------
+
+
+    PROMPT
+  end
+
   def identical_place_selected
     <<~PROMPT
 
@@ -66,6 +78,20 @@ class ChessBoardPrompt
     PROMPT
   end
 
+  def player_menu
+    <<~PROMPT
+
+
+        ----------------------------------------
+                          Chess
+        ----------------------------------------
+                      1. New game
+                      2. Load game
+        Enter '1' or anything else to start a new game
+        ENter '2' to load existing game
+    PROMPT
+  end
+
   def promotion
     <<~PROMPT
 
@@ -82,7 +108,7 @@ class ChessBoardPrompt
     PROMPT
   end
 
-  def select_destination
+  def select_destination(board)
     <<~PROMPT
 
         #{board}

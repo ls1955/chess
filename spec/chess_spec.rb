@@ -1,6 +1,7 @@
 # frozen_string_literal: false
 
 require_relative './../lib/chess'
+require 'yaml'
 
 describe Chess do
   subject(:chess) { described_class.new }

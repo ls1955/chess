@@ -6,7 +6,7 @@ class ChessBoard
   ROW_AMOUNT = 8
   COL_AMOUNT = 8
 
-  attr_reader :layout
+  attr_accessor :layout
 
   def initialize
     @layout = Array.new(ROW_AMOUNT) { Array.new(COL_AMOUNT, ' ') }
@@ -36,7 +36,7 @@ class ChessBoard
     result = 0
 
     layout.each_with_index do |row, i|
-      row.each_with_index do |slot, j|
+      row.length.times do |j|
         result += 1 if occupy?(i, j) && chess_piece(i, j).important?
       end
     end
